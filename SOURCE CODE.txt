@@ -1,0 +1,165 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_TITLE 100
+#define MAX_AUTHOR 100
+
+typedef struct {
+    char title[MAX_TITLE];
+    char author[MAX_AUTHOR];
+    int year;
+} Book;
+
+void addBook();
+void viewBooks();
+void searchBook();
+void deleteBook();
+
+int main() {
+    int choice;
+
+    while (1) {
+        printf("\nLibrary Management System\n");
+        printf("1. Add Book\n");
+        printf("2. View Books\n");
+        printf("3. Search Book\n");
+        printf("4. Delete Book\n");
+        printf("5. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1:
+                addBook();
+                break;
+            case 2:
+                viewBooks();
+                break;
+            case 3:
+                searchBook();
+                break;
+            case 4:
+                deleteBook();
+                break;
+            case 5:
+                exit(0);
+                break;
+            default:
+                printf("Invalid choice! Please try again.\n");
+        }
+    }
+
+    return 0;
+}
+
+void addBook() {
+    Book book;
+    FILE *file = fopen("library.txt", "a");
+
+    if (!file) {
+        printf("Error opening file!\n");
+        return;
+    }
+
+    printf("Enter book title: ");
+    getchar(); // to clear newline character from input buffer
+    fgets(book.title, MAX_TITLE, stdin);
+    book.title[strcspn(book.title, "\n")] = '\0'; // remove newline character
+
+    printf("Enter book author: ");
+    fgets(book.author, MAX_AUTHOR, stdin);
+    book.author[strcspn(book.author, "\n")] = '\0'; // remove newline character
+
+    printf("Enter publication year: ");
+    scanf("%d", &book.year);
+
+    fprintf(file, "%s;%s;%d\n", book.title, book.author, book.year);
+    fclose(file);
+
+    printf("Book added successfully!\n");
+}
+
+void viewBooks() {
+    Book book;
+    FILE *file = fopen("library.txt", "r");
+
+    if (!file) {
+        printf("No books found!\n");
+        return;
+    }
+
+    printf("\nLibrary Books:\n");
+    while (fscanf(file, "%[^;];%[^;];%d\n", book.title, book.author, &book.year) != EOF) {
+        printf("Title: %s, Author: %s, Year: %d\n", book.title, book.author, book.year);
+    }
+    fclose(file);
+}
+
+void searchBook() {
+    char title[MAX_TITLE];
+    Book book;
+    FILE *file = fopen("library.txt", "r");
+
+    if (!file) {
+        printf("No books found!\n");
+        return;
+    }
+
+    printf("Enter book title to search: ");
+    getchar(); // to clear newline character from input buffer
+    fgets(title, MAX_TITLE, stdin);
+    title[strcspn(title, "\n")] = '\0'; // remove newline character
+
+    int found = 0;
+    while (fscanf(file, "%[^;];%[^;];%d\n", book.title, book.author, &book.year) != EOF) {
+        if (strcmp(book.title, title) == 0) {
+            printf("Title: %s, Author: %s, Year: %d\n", book.title, book.author, book.year);
+            found = 1;
+            break;
+        }
+    }
+
+    if (!found) {
+        printf("Book not found!\n");
+    }
+    fclose(file);
+}
+
+void deleteBook() {
+    char title[MAX_TITLE];
+    Book book;
+    FILE *file = fopen("library.txt", "r");
+    FILE *temp = fopen("temp.txt", "w");
+
+    if (!file || !temp) {
+        printf("Error opening file!\n");
+        return;
+    }
+
+    printf("Enter book title to delete: ");
+    getchar(); // to clear newline character from input buffer
+    fgets(title, MAX_TITLE, stdin);
+    title[strcspn(title, "\n")] = '\0'; // remove newline character
+
+    int found = 0;
+    while (fscanf(file, "%[^;];%[^;];%d\n", book.title, book.author, &book.year) != EOF) {
+        if (strcmp(book.title, title) != 0) {
+            fprintf(temp, "%s;%s;%d\n", book.title, book.author, book.year);
+        } else {
+            found = 1;
+        }
+    }
+
+    fclose(file);
+    fclose(temp);
+
+    remove("library.txt");
+    rename("temp.txt", "library.txt");
+
+    if (found) {
+        printf("Book deleted successfully!\n");
+    } else {
+        printf("Book not found!\n");
+    }
+}
